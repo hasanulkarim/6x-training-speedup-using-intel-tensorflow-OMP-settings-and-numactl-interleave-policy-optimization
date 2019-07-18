@@ -1,5 +1,7 @@
 #!/bin/bash sh
+#Download the benchmark model from github
 git clone -b cnn_tf_v1.12_compatible  https://github.com/tensorflow/benchmarks.git
+#go to the tf_cnn_benchmarks directory, makes the bash script simpler (note, save the bash script file in the tf_cnn_benchmarks directory as well (makes life easier)
 cd ~/DL/benchmarks/scripts/tf_cnn_benchmarks
 rm *.log # remove logs from any previous benchmark runs
 #activate default environment with tensorflow (not intel optimized tensorflow)

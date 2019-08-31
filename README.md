@@ -120,7 +120,7 @@ $ python3 tf_cnn_benchmarks.py \
 
 #### Setup 3 (Applying numa interleave policy on top of setup 2)
 ```sh
-numactl -i all python3 tf_cnn_benchmarks.py \
+$ numactl -i all python3 tf_cnn_benchmarks.py \
 	 --device=CPU \
 	 --data_name=imagenet \
      	 --batch_size=128 \
@@ -130,6 +130,20 @@ numactl -i all python3 tf_cnn_benchmarks.py \
 	 --mkl=true \
 	 --num_inter_threads=18 \
 	 --num_intra_threads=18 \
-	 2>&1 | tee optimized6.log #sends the stderror to where stdoutput is going and 
+	 2>&1 | tee optimized2.log #sends the stderror to where stdoutput is going and 
 	 			   #then tee combines both and sends to display and the log file
 ```
+
+## Results
+
+htop was used to monitor the load distribution during the training and the difference can be seen on how many idle threads are present in the default settings against when the environment variables are optimized.
+
+![alt text](https://github.com/hasanulkarim/Performance-optimization-using-intel-tensorflow-OMP-settings-and-numactl/blob/hasanulkarim-patch-1/images/htop_setup1.png)  
+**Fig1:** _(setup1:no optimization)_ – _htop_ (right) showing the load distribution on the threads of the CPU and on Memory, Red represents idle or ‘waiting’ thread, while training (left)
+
+![alt text](https://github.com/hasanulkarim/Performance-optimization-using-intel-tensorflow-OMP-settings-and-numactl/blob/hasanulkarim-patch-1/images/htop_setup2.png)
+**Fig2:** _(setup2: intel optimized tensorflow and affinity settings optimized)_ - _htop_ showing the load distribution on the threads of the CPU and on Memory, Red represents idle or ‘waiting’ thread. MKLDNN_VERBOSE is displaying the operation performed (left)
+
+![alt text](https://github.com/hasanulkarim/Performance-optimization-using-intel-tensorflow-OMP-settings-and-numactl/blob/hasanulkarim-patch-1/images/htop_setup3.png)
+**Fig3:** _(setup3: intel optimized tensorflow and affinity settings optimized with numactl interleave policy)_ - _htop_ showing the load distribution on the threads of the CPU and on Memory, Red represents idle or ‘waiting’ thread, MKLDNN_VERBOSE is displaying the operation performed (left)
+

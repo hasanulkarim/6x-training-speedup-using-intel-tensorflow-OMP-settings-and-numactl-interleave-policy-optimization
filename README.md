@@ -138,12 +138,12 @@ $ numactl -i all python3 tf_cnn_benchmarks.py \
 
 htop was used to monitor the load distribution during the training and the difference can be seen on how many idle threads are present in the default settings against when the environment variables are optimized.
 
-![alt text](https://github.com/hasanulkarim/Performance-optimization-using-intel-tensorflow-OMP-settings-and-numactl/blob/hasanulkarim-patch-1/images/htop_setup1.png)  
+![alt text](./images/htop_setup1.png)  
 **Fig1:** _(setup1:no optimization)_ – _htop_ (right) showing the load distribution on the threads of the CPU and on Memory, Red represents idle or ‘waiting’ thread, while training (left)
 
-![alt text](https://github.com/hasanulkarim/Performance-optimization-using-intel-tensorflow-OMP-settings-and-numactl/blob/hasanulkarim-patch-1/images/htop_setup2.png)
+![alt text](./images/htop_setup2.png)
 **Fig2:** _(setup2: intel optimized tensorflow and affinity settings optimized)_ - _htop_ showing the load distribution on the threads of the CPU and on Memory, Red represents idle or ‘waiting’ thread. MKLDNN_VERBOSE is displaying the operation performed (left)
 
-![alt text](https://github.com/hasanulkarim/Performance-optimization-using-intel-tensorflow-OMP-settings-and-numactl/blob/hasanulkarim-patch-1/images/htop_setup3.png)
+![alt text](./images/htop_setup3.png)
 **Fig3:** _(setup3: intel optimized tensorflow and affinity settings optimized with numactl interleave policy)_ - _htop_ showing the load distribution on the threads of the CPU and on Memory, Red represents idle or ‘waiting’ thread, MKLDNN_VERBOSE is displaying the operation performed (left)
 

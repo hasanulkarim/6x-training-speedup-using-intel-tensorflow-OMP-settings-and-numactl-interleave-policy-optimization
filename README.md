@@ -93,7 +93,43 @@ $ python3 tf_cnn_benchmarks.py \
 $ source deactivate
 ```
 
+#### Setup 2 (optimized tf.config_proto() and MKL=True in intel python environment)
 
+```sh
+$ source activate IDP
+#set environment settings (these are recommended settings based on some read, 
+#resources mentioned in the resources section at the end)
+$ export KMP_AFFINITY=granularity=fine,verbose,compact,1,0
+$ export KMP_BLOCKTIME=1
+$ export KMP_SETTINGS=1
+$ export OMP_NUM_THREADS=18
+$ export OMP_PROC_BIND=true
+#run the python code with config update
+$ python3 tf_cnn_benchmarks.py \
+	 --device=CPU \
+	 --data_name=imagenet \
+     	 --batch_size=128 \
+	 --num_batches=30 \
+	 --model=resnet50 \
+	 --data_format=NHWC \
+	 --mkl=true \
+	 --num_inter_threads=2 \
+	 --num_intra_threads=18 \
+	 2>&1 | tee optimized1.log
+```
 
-
-
+#### Setup 3 (Applying numa interleave policy on top of setup 2)
+```sh
+numactl -i all python3 tf_cnn_benchmarks.py \
+	 --device=CPU \
+	 --data_name=imagenet \
+     	 --batch_size=128 \
+	 --num_batches=30 \
+	 --model=resnet50 \
+	 --data_format=NCHW \
+	 --mkl=true \
+	 --num_inter_threads=18 \
+	 --num_intra_threads=18 \
+	 2>&1 | tee optimized6.log #sends the stderror to where stdoutput is going and 
+	 			   #then tee combines both and sends to display and the log file
+```

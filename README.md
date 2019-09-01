@@ -2,7 +2,7 @@
 
 This is a quick tryout to optimize training performance on CPU using intel tensorflow, KMP affinity settings and numactl policies on an AWS instance and compare speedup on training performance.
 
-Below is a walk through of the steps to get the results and the full bash script can be found at esnet50_train_optimize.sh file.
+Below is a walk through of the steps to get the results and a sample bash script can be found at resnet50_train_optimize.sh file.
 
 ## Connecting to AWS and installing the dependencies
 
@@ -61,7 +61,8 @@ More details can be found here: [tf_cnn_benchmarks: High performance benchmarks]
 
 ## Configuration
 
-A single node on an Intel® Xeon® CPU E5-2666 v3 @ 2.90GHz with 18 physical cores with 2 threads per core and 60 GB of RAM* was used. This node was accessed via a c4.8xLarge AWS instance with 2 Numa Nodes available. (Detailed CPU configuration can be found in the supplementary section at the end of the readme file) 
+A single node on an Intel® Xeon® CPU E5-2666 v3 @ 2.90GHz with 18 physical cores with 2 threads per core and 60 GB of RAM* was used. This node was accessed via a c4.8xLarge AWS instance with 2 Numa Nodes available. 
+
 tf_cnn_benchmarks: High performance benchmarks was used for the test. ResNet-50 model with synthetic data and batch size of 128 and 30 batches was trained with different settings as detailed below. 
 
 \*Note: the size of the RAM was not a constraint in this experiment
@@ -133,17 +134,74 @@ $ numactl -i all python3 tf_cnn_benchmarks.py \
 	 2>&1 | tee optimized2.log #sends the stderror to where stdoutput is going and 
 	 			   #then tee combines both and sends to display and the log file
 ```
+## Playing with NUMA Scheduling Policy settings
+
+The CPU used for this project had 2 NUMA nodes available as can be seen from ```$ lscpu```:
+```sh
+NUMA node0 CPU(s):   0-8, 18-26
+NUMA node1 CPU(s):   9-17, 27-35
+```
+NUMACTL gives the ability to control the NUMA scheduling policy and memory placement policy, concretely, which cores to use to run the tasks and where to allocate data. It can be installed by, “$ Sudo apt install numactl”.  The default policy can be seen by “numactl –s” and the HW configuration including memory size, free memory and node distances can be seen by “numactl –H” commands as shown below for this specific CPU:
+```sh
+$ numactl -s
+```
+```
+#output:
+policy: default
+preferred node: current
+physcpubind: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35
+cpubind: 0 1
+nodebind: 0 1
+membind: 0 1
+```
+```sh
+$ numactl -H
+```
+```
+#output:
+available: 2 nodes (0-1)
+node 0 cpus: 0 1 2 3 4 5 6 7 8 18 19 20 21 22 23 24 25 26
+node 0 size: 30143 MB
+node 0 free: 29281 MB
+node 1 cpus: 9 10 11 12 13 14 15 16 17 27 28 29 30 31 32 33 34 35
+node 1 size: 30226 MB
+node 1 free: 29980 MB
+node distances:
+node   0   1
+  0:  10  20
+  1:  20  10
+```
+Binding memory to node 1 by “numactl –p” or “numactl –m” resulted in reduced performance, both resulting in ~23.6 images/sec. reducing # of CPU threads or cores/nodes resulted in linearly decreasing performance which indicates this particular algorithm is more CPU bound than memory bound and should be scalable by increasing CPU cores. Htop can be used to verify the result of using different CPU binding as shown in the image below.
+
+![alt text](./images/NUMA different policy setup.png)
+**Fig1:** Achieving CPU core distribution using numactl, (a) bind to node 0 only, using “numactl –C 0” and (b) Use only 1 thread from all available cores using “numactl –C 0,2,4….etc” note, both these settings resulted in lowering in performance for this algorithm, but might be useful for memory bound problems
 
 ## Results
 
 htop was used to monitor the load distribution during the training and the difference can be seen on how many idle threads are present in the default settings against when the environment variables are optimized.
 
 ![alt text](./images/htop_setup1.png)  
-**Fig1:** _(setup1:no optimization)_ – _htop_ (right) showing the load distribution on the threads of the CPU and on Memory, Red represents idle or ‘waiting’ thread, while training (left)
+**Fig2:** _(setup1:no optimization)_ – _htop_ (right) showing the load distribution on the threads of the CPU and on Memory, Red represents idle or ‘waiting’ thread, while training (left)
 
 ![alt text](./images/htop_setup2.png)
-**Fig2:** _(setup2: intel optimized tensorflow and affinity settings optimized)_ - _htop_ showing the load distribution on the threads of the CPU and on Memory, Red represents idle or ‘waiting’ thread. MKLDNN_VERBOSE is displaying the operation performed (left)
+**Fig3:** _(setup2: intel optimized tensorflow and affinity settings optimized)_ - MKLDNN_VERBOSE is displaying the operation performed (left), the number of red threads are lower then setup 1, indicates CPU threads are not waiting for data
 
 ![alt text](./images/htop_setup3.png)
-**Fig3:** _(setup3: intel optimized tensorflow and affinity settings optimized with numactl interleave policy)_ - _htop_ showing the load distribution on the threads of the CPU and on Memory, Red represents idle or ‘waiting’ thread, MKLDNN_VERBOSE is displaying the operation performed (left)
+**Fig4:** _(setup3: intel optimized tensorflow and affinity settings optimized with numactl interleave policy)_ the number of red threads are less than setup 1 and similar or better than setup 2
 
+The default setup trained 30 batches with an average of 5.48 images/sec. While setup 2 returned an average of 33.62 images/sec, which is 6.14x performance increase compared to the un-optimized settings.
+
+Binding memory to node 1 by “numactl –p” or “numactl –m” resulted in reduced performance, both resulting in ~23.6 images/sec. reducing # of CPU threads or cores/nodes resulted in linearly decreasing performance which indicates this particular algorithm is more CPU bound than memory bound and should be scalable by increasing CPU cores. Htop can be used to verify the result of using different CPU binding as shown in Fig1. 
+
+It was observed that for this algorithm the memory interleave policy on all nodes returned the best performance and in fact showed better performance than setup2. “numactl –i all”, allows the memory to be allocated using round robin on nodes. When memory cannot be allocated on the current interleave target fall back to other nodes as mentioned in https://linux.die.net/man/8/numactl page. This settings along with setup 2 settings performed 34.18 images/sec, which is 6.24x increase in performance from the setup1.
+
+Below is a comparison of the top 3 setups performance:
+
+![alt text](./images/performance comparison.png)
+**Fig5:**  performance comparison of the three setups discussed in this article
+
+## Wrap Up
+
+It was seen that the training performance on a CPU can be improved by upto 6.24x by optimizing the environment settings, tensorflow inter and intra thread parallelization settings and numactl memory allocation settings. Different numactl settings can be used to decide whether a problem is memory bound or CPU bound. For a CPU bound problem, using interleave memory policy worked best, but for memory bound problems, local or memory binding on nearest node and reducing no of cores to use might work better as illustrated in this whitepaper from intel, Accelerating memory-bound machine-learning models on intel xeon processors.
+
+Most of the recommendation found for optimizations are found by trial and error, so it might be different for different algorithms/HW configuration etc. So, it's recommended to start with the best known methods but definitely dont be limited to these values only. A different combination of settings might give a significant boost then the recommended settings, so keep playing!

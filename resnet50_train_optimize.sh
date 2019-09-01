@@ -5,9 +5,9 @@ git clone -b cnn_tf_v1.12_compatible  https://github.com/tensorflow/benchmarks.g
 cd ~/DL/benchmarks/scripts/tf_cnn_benchmarks
 rm *.log # remove logs from any previous benchmark runs
 #activate default environment with tensorflow (not intel optimized tensorflow)
-source activate tf
 export MKL_VERBOSE=1
 export MKLDNN_VERBOSE=1
+source activate tf
 time python3 tf_cnn_benchmarks.py \
 	 --device=CPU \
 	 --data_name=imagenet \
@@ -29,7 +29,7 @@ export OMP_PROC_BIND=true
 time python3 tf_cnn_benchmarks.py \
 	 --device=CPU \
 	 --data_name=imagenet \
-     --batch_size=128 \
+     	 --batch_size=128 \
 	 --num_batches=30 \
 	 --model=resnet50 \
 	 --data_format=NHWC \
@@ -66,7 +66,7 @@ export OMP_NUM_THREADS=1
 time python3 tf_cnn_benchmarks.py \
 	 --device=CPU \
 	 --data_name=imagenet \
-     --batch_size=128 \
+     	 --batch_size=128 \
 	 --num_batches=30 \
 	 --model=resnet50 \
 	 --data_format=NHWC \

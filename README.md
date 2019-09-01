@@ -173,7 +173,7 @@ node   0   1
 ```
 Binding memory to node 1 by “numactl –p” or “numactl –m” resulted in reduced performance, both resulting in ~23.6 images/sec. reducing # of CPU threads or cores/nodes resulted in linearly decreasing performance which indicates this particular algorithm is more CPU bound than memory bound and should be scalable by increasing CPU cores. Htop can be used to verify the result of using different CPU binding as shown in the image below.
 
-![alt text](./images/NUMA different policy setup.png)
+![alt text](./images/NUMA_different_policy_setup.png)
 **Fig1:** Achieving CPU core distribution using numactl, (a) bind to node 0 only, using “numactl –C 0” and (b) Use only 1 thread from all available cores using “numactl –C 0,2,4….etc” note, both these settings resulted in lowering in performance for this algorithm, but might be useful for memory bound problems
 
 ## Results
@@ -197,7 +197,7 @@ It was observed that for this algorithm the memory interleave policy on all node
 
 Below is a comparison of the top 3 setups performance:
 
-![alt text](./images/performance comparison.png)
+![alt text](./images/performance_comparison.png)
 **Fig5:**  performance comparison of the three setups discussed in this article
 
 ## Wrap Up

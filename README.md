@@ -104,7 +104,6 @@ $ export KMP_AFFINITY=granularity=fine,verbose,compact,1,0
 $ export KMP_BLOCKTIME=1
 $ export KMP_SETTINGS=1
 $ export OMP_NUM_THREADS=18
-$ export OMP_PROC_BIND=true
 #run the python code with config update
 $ python3 tf_cnn_benchmarks.py \
 	 --device=CPU \
@@ -129,7 +128,7 @@ $ numactl -i all python3 tf_cnn_benchmarks.py \
 	 --model=resnet50 \
 	 --data_format=NCHW \
 	 --mkl=true \
-	 --num_inter_threads=18 \
+	 --num_inter_threads=2 \
 	 --num_intra_threads=18 \
 	 2>&1 | tee optimized2.log #sends the stderror to where stdoutput is going and 
 	 			   #then tee combines both and sends to display and the log file
